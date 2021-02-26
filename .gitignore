@@ -1,4 +1,5 @@
 wallpapers/
+*.csv
 *.png
 .DS_Store
 

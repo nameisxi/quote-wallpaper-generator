@@ -2,9 +2,15 @@ import time
 import random
 import textwrap
 
+import pandas as pd
 from PIL import Image, ImageFont, ImageDraw 
 from appscript import app, mactypes
 import subprocess
+
+
+wallpaper_filename = "zhihu-wallpaper2"
+wallpaper_path = f"./{wallpaper_filename}.png"
+max_line_length = 80
 
 SCRIPT = """/usr/bin/osascript<<END
 tell application "Finder"
@@ -15,36 +21,64 @@ END"""
 def set_desktop_background(filename):
     subprocess.Popen(SCRIPT%filename, shell=True)
 
+def combine_lines(quote):
+    try:
+        counter = 0
+        while True:
+            sentences = quote.splitlines(True)
+            for j, sentence in enumerate(sentences):
+                if counter == len(sentences): return quote
+                if j > 0 and (len(sentence) + len(sentences[j-1])) < max_line_length:
+                    quote = quote.replace(sentences[j-1], sentences[j-1].replace("\n", ""))
+                    counter = 0
+                    break
+                else:
+                    counter += 1
+                
+        return quote
+    except:
+        return quote
 
-wallpaper_filename = "zhihu-wallpaper"
-wallpaper_path = f"./{wallpaper_filename}.png"
+def split_to_newline(quote):
+    quote = quote.replace(".", ".\n").replace("!", "!\n").replace("?", "?\n")
+    quote = combine_lines(quote)
 
-quotes = [
-    "Live to the point of tears.",
-    "To be ignorant of what occurred before you were born is to remain always a child. For what is the worth of human life, unless it is woven into the life of our ancestors by the records of history?",
-    "Read at every wait; read at all hours; read within leisure; read in times of labor; read as one goes in; read as one goest out. The task of the educated mind is simply put: read to lead.",
-    "If we are not ashamed to think it, we should not be ashamed to say it.",
-    "If you're ever behind on commitments to other people, you must commit to working 14 hours a day on those commitments until you've caught up."
-]
+    sentences = quote.splitlines(True)
+    for i, sentence in enumerate(sentences):
+        if len(sentence) > max_line_length:
+            quote = quote.replace(sentence, sentence.replace(":", ":\n").replace(";", ";\n"))
+    quote = combine_lines(quote)
+
+    sentences = quote.splitlines(True)
+    for i, sentence in enumerate(sentences):
+        if len(sentence) > max_line_length:
+            quote = quote.replace(sentence, sentence.replace(",", ",\n"))
+    quote = combine_lines(quote)
+
+    sentences = quote.splitlines(True)
+    for sentence in sentences:
+        quote = quote.replace(sentence, sentence.lstrip())
+
+    return quote
 
 def main():
     wallpaper = Image.open(wallpaper_path).convert('RGBA')
+    quotes = pd.read_csv("./goodreads_quotes_export.csv")
+    font = ImageFont.truetype('/System/Library/Fonts/SFCompact.ttf', 40)
 
-    quote = random.choice(quotes)
-    quote_index = quotes.index(quote)
-    quote = textwrap.fill(quote, width=70)
+    quote = quotes.sample(n=1)
 
-    font = ImageFont.truetype('/System/Library/Fonts/SFCompact.ttf', 50)
+    quote_text = split_to_newline(quote['Quote'].values[0]) 
+    quote_text = f"{quote_text}\n- {quote['Author'].values[0]}"
 
     wallpaper_editable = ImageDraw.Draw(wallpaper)
-    wallpaper_editable.text((15,15), quote, (255, 255, 255), font=font)
+    wallpaper_editable.text((575,1), quote_text, (255, 255, 255), font=font)
 
-    filename = f"/Users/thomaspelm/projects/quote-to-wallpaper-generator/{wallpaper_filename}_{quote_index}_{time.time()}.png"
+    filename = f"/Users/thomaspelm/projects/quote-to-wallpaper-generator/wallpapers/{wallpaper_filename}_{quote['Goodreads Quote Id'].values[0]}_{time.time()}.png"
     wallpaper.save(filename)
 
     # Set Mac desktop wallpaper
     set_desktop_background(filename)
-    #app('Finder').desktop_picture.set(mactypes.File(filename))
 
 
 if __name__ == "__main__":
