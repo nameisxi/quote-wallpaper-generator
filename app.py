@@ -1,6 +1,4 @@
 import time
-import random
-import textwrap
 
 import pandas as pd
 from PIL import Image, ImageFont, ImageDraw 
@@ -9,7 +7,7 @@ import subprocess
 
 
 wallpaper_filename = "zhihu-wallpaper2"
-wallpaper_path = f"./{wallpaper_filename}.png"
+wallpaper_path = f"/Users/thomaspelm/projects/quote-to-wallpaper-generator/{wallpaper_filename}.png"
 max_line_length = 80
 
 SCRIPT = """/usr/bin/osascript<<END
@@ -63,7 +61,7 @@ def split_to_newline(quote):
 
 def main():
     wallpaper = Image.open(wallpaper_path).convert('RGBA')
-    quotes = pd.read_csv("./goodreads_quotes_export.csv")
+    quotes = pd.read_csv("/Users/thomaspelm/projects/quote-to-wallpaper-generator//goodreads_quotes_export.csv")
     font = ImageFont.truetype('/System/Library/Fonts/SFCompact.ttf', 40)
 
     quote = quotes.sample(n=1)
@@ -72,7 +70,7 @@ def main():
     quote_text = f"{quote_text}\n- {quote['Author'].values[0]}"
 
     wallpaper_editable = ImageDraw.Draw(wallpaper)
-    wallpaper_editable.text((575,1), quote_text, (255, 255, 255), font=font)
+    wallpaper_editable.text((575,1), quote_text, (0, 101, 255), font=font)
 
     filename = f"/Users/thomaspelm/projects/quote-to-wallpaper-generator/wallpapers/{wallpaper_filename}_{quote['Goodreads Quote Id'].values[0]}_{time.time()}.png"
     wallpaper.save(filename)
@@ -83,3 +81,5 @@ def main():
 
 if __name__ == "__main__":
     main()
+
+    
